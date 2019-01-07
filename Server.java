@@ -4,10 +4,15 @@
  */
 package jhelp;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class sets a network connection between end client's objects
@@ -31,11 +36,12 @@ public class Server implements JHelp {
     /**
      *
      */
-    private ObjectInputStream input;
+    private DataInputStream input;
     /**
      *
      */
-    private ObjectOutputStream output;
+    private DataOutputStream output;
+    private Socket serverClient;
 
     /** Creates a new instance of Server */
     public Server() {
@@ -49,6 +55,17 @@ public class Server implements JHelp {
      * @param dbPort
      */
     public Server(int port, int dbPort) {
+        port = DEFAULT_DATABASE_PORT;
+        dbPort = DEFAULT_DATABASE_PORT;
+        try {
+            serverClient = new Socket(InetAddress.getLocalHost(), DEFAULT_DATABASE_PORT);
+            clientSocket = serverSocket.accept();
+            ClientThread clentThread = new ClientThread(this, clientSocket);
+        } catch (UnknownHostException ex) {
+           ex.printStackTrace();
+        } catch (IOException ex) {
+           ex.printStackTrace();
+        }
         System.out.println("SERVER: Server Constructed");
     }
 
@@ -59,9 +76,10 @@ public class Server implements JHelp {
     public static void main(String[] args) {
         System.out.println("SERVER: main");
         Server server = new Server();
+       
         if (server.connect(args) == JHelp.OK) {
             server.run();
-            server.disconnect();
+//            server.disconnect();
         }
     }
 
@@ -69,6 +87,17 @@ public class Server implements JHelp {
      *
      */
     private void run() {
+        try {
+            output = new DataOutputStream(clientSocket.getOutputStream());
+
+            System.out.println("Client DataOutputStream  created");
+            input = new DataInputStream(clientSocket.getInputStream());
+            System.out.println("ClientDataInputStream  created");
+            
+            
+        } catch (IOException ex) {
+         ex.printStackTrace();
+        }
         System.out.println("SERVER: run");
     }
 
@@ -79,6 +108,7 @@ public class Server implements JHelp {
      * @return error code. The method returns {@link JHelp#OK} if streams are
      * successfully opened, otherwise the method returns {@link JHelp#ERROR}.
      */
+    @Override
     public int connect() {
         System.out.println("SERVER: connect");
         return OK;
@@ -92,6 +122,7 @@ public class Server implements JHelp {
      * @return error code. The method returns {@link JHelp#OK} if connection are
      * openeds uccessfully, otherwise the method returns {@link JHelp#ERROR}.
      */
+    @Override
     public int connect(String[] args) {
         System.out.println("SERVER: connect");
         return OK;
@@ -105,6 +136,7 @@ public class Server implements JHelp {
      * application.
      * @return modified {@link Data} object
      */
+    @Override
     public Data getData(Data data) {
         System.out.println("SERVER:getData");
         return null;
@@ -116,6 +148,7 @@ public class Server implements JHelp {
      * with database ({@link ServerDb} object) closed successfully,
      * otherwise the method returns {@link JHelp#ERROR} or any error code.
      */
+    @Override
     public int disconnect() {
         System.out.println("SERVER: disconnect");
         return OK;

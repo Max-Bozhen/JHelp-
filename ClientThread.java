@@ -42,6 +42,8 @@ public class ClientThread implements JHelp, Runnable {
      * with client application.
      */
     public ClientThread(Server server, Socket socket) {
+        this.server = server;
+        this.clientSocket = socket;
         System.out.println("MClient: constructor");
     }
 

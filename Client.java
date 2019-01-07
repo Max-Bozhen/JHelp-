@@ -4,6 +4,7 @@
  */
 package jhelp;
 
+import java.net.Socket;
 import java.util.Properties;
 import javax.swing.JFrame;
 
@@ -26,6 +27,7 @@ public class Client extends JFrame implements JHelp {
      * Private Data object presents informational data.
      */
     private Data data;
+    private  Socket clientsocket;
 
     /**
      * Constructor with parameters.
