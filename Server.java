@@ -7,6 +7,8 @@ package jhelp;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -37,11 +39,11 @@ public class Server implements JHelp {
     /**
      *
      */
-    private DataInputStream input;
+    private ObjectInputStream input;
     /**
      *
      */
-    private DataOutputStream output;
+    private ObjectOutputStream output;
 
     /**
      * Creates a new instance of Server
@@ -52,7 +54,6 @@ public class Server implements JHelp {
 
             clientSocket = new Socket(InetAddress.getLocalHost(), DEFAULT_DATABASE_PORT);
 
-            serverSocket = new ServerSocket(DEFAULT_SERVER_PORT);
         } catch (UnknownHostException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -80,18 +81,20 @@ public class Server implements JHelp {
         System.out.println("SERVER: main");
         Server server = new Server();
 
-        if (server.connect(args) == JHelp.OK) {
-            System.out.println("dskg");
-            server.run();
+        server.connect(args);
+        System.out.println("dskg");
+        server.run();
 //            server.disconnect();
-        }
+
     }
 
     /**
      *
      */
     private void run() throws IOException {
+        serverSocket = new ServerSocket(DEFAULT_SERVER_PORT);
         while (true) {
+            System.out.println("Waiting for client");
             Socket client = serverSocket.accept();
             ClientThread clientThread = new ClientThread(this, client);
             new Thread(clientThread).start();
@@ -112,12 +115,11 @@ public class Server implements JHelp {
     public int connect() {
 
         try {
-            output = new DataOutputStream(clientSocket.getOutputStream());
+            output = new ObjectOutputStream(clientSocket.getOutputStream());
 
             System.out.println("Client DataOutputStream  created");
-            input = new DataInputStream(clientSocket.getInputStream());
+            input = new ObjectInputStream(clientSocket.getInputStream());
             System.out.println("ClientDataInputStream  created");
-
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -137,6 +139,7 @@ public class Server implements JHelp {
      */
     @Override
     public int connect(String[] args) {
+        
         System.out.println("SERVER: connect");
         return OK;
     }

@@ -50,8 +50,8 @@ public class ServerDb implements JHelp {
 
     private ServerSocket serverSocket;
     private Socket clientSocket;
-    private DataInputStream input;
-    private DataOutputStream output;
+    private ObjectInputStream input;
+    private ObjectOutputStream output;
     private final String DB_CONN_STRING = "jdbc:derby://localhost:1527/terms";
     private final String DRIVER_CLASS_NAME = "org.apache.derby.jdbc.ClientDriver";
     private final String USER_NAME = "JHelp";
@@ -136,8 +136,8 @@ public class ServerDb implements JHelp {
 
             try {
                 System.out.println("Client connected");
-                output = new DataOutputStream(clientSocket.getOutputStream());
-                input = new DataInputStream(clientSocket.getInputStream());
+                output = new ObjectOutputStream(clientSocket.getOutputStream());
+                input = new ObjectInputStream(clientSocket.getInputStream());
             } catch (IOException ex) {
                 Logger.getLogger(ServerDb.class.getName()).log(Level.SEVERE, null, ex);
             }

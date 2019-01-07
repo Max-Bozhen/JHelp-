@@ -14,6 +14,8 @@ import java.awt.event.ActionListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Properties;
@@ -36,6 +38,7 @@ import javax.swing.border.LineBorder;
 
 /**
  * Client class provides users's interface of the application.
+ *
  * @author <strong >Y.D.Zakovryashin, 2009</strong>
  * @version 1.0
  */
@@ -53,10 +56,13 @@ public class Client extends JFrame implements JHelp {
      * Private Data object presents informational data.
      */
     private Data data;
-    private  Socket clientsocket;
+    private Socket clientsocket;
+    private ObjectOutputStream oos;
+    private ObjectInputStream ois;
 
     /**
      * Constructor with parameters.
+     *
      * @param args Array of {@link String} objects. Each item of this array can
      * define any client's property.
      */
@@ -137,23 +143,25 @@ public class Client extends JFrame implements JHelp {
         main_tab.add(down, BorderLayout.CENTER);
         settings_tab.add(term1);
         settings_tab.add(termtxt1);
-//        exit.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                
-//                end();
-//                System.exit(1);
-//            }
-//        });
-//        find.addActionListener((ActionEvent e) -> {
-//            try {
-//               definitions_area.setText(getData(terms));
-//
-//                 
-//            } catch (IOException ex) {
-//                ex.printStackTrace();
-//            }
-//        });
+        exit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                disconnect();
+                System.exit(1);
+            }
+        });
+        find.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                String term = termtxt.getText();
+                Data data = new Data(new Item(term));
+
+                getData(data);
+                definitions_area.setText(data.getValue(SELECT).toString());
+            }
+        });
 //        next.addActionListener(new ActionListener(){
 //            @Override
 //            public void actionPerformed(ActionEvent e) {
@@ -174,13 +182,16 @@ public class Client extends JFrame implements JHelp {
 
     /**
      * Method for application start
+     *
      * @param args agrgument of command string
      */
     static public void main(String[] args) {
 
         Client client = new Client(args);
-        if (client.connect(args) == JHelp.OK) {
+
+        if (client.connect() == JHelp.OK) {
             client.run();
+
             client.disconnect();
         }
     }
@@ -192,34 +203,43 @@ public class Client extends JFrame implements JHelp {
         System.out.println("ClientThread started");
         try {
 
-          DataOutputStream  oos = new DataOutputStream(clientsocket.getOutputStream());
+            oos = new ObjectOutputStream(clientsocket.getOutputStream());
             System.out.println("oos ok");
-           DataInputStream ois = new DataInputStream(clientsocket.getInputStream());
+            ois = new ObjectInputStream(clientsocket.getInputStream());
             System.out.println("ois ok");
             //чтение и обработка входящих данных
         } catch (IOException ex) {
 
         }
         System.out.println("Client: run");
+        try {
+            oos.writeUTF("hello");
+            oos.flush();
+        } catch (IOException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
      * Method set connection to default server with default parameters
+     *
      * @return error code
      */
     @Override
     public int connect() {
         try {
-            clientsocket = new Socket(InetAddress.getLocalHost(), 12345);
+            clientsocket = new Socket("localhost", 12345);
+            System.out.println("connected to server");
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        throw new UnsupportedOperationException("Not supported yet.");
+        return JHelp.OK;
     }
 
     /**
-     * Method set connection to server with parameters defines by argument 
+     * Method set connection to server with parameters defines by argument
      * <code>args</code>
+     *
      * @return error code
      */
     public int connect(String[] args) {
@@ -229,21 +249,53 @@ public class Client extends JFrame implements JHelp {
 
     /**
      * Method gets data from data source
+     *
      * @param data initial object (template)
      * @return new object
      */
     @Override
     public Data getData(Data data) {
+        connect();
+        System.out.println("ClientThread started");
+        try {
+
+            oos = new ObjectOutputStream(clientsocket.getOutputStream());
+            System.out.println("oos ok");
+            ois = new ObjectInputStream(clientsocket.getInputStream());
+            System.out.println("ois ok");
+            //чтение и обработка входящих данных
+        } catch (IOException ex) {
+
+        }
+        System.out.println("Client: run");
+        try {
+            oos.writeObject(data);
+            System.out.println("Send");
+            oos.flush();
+            
+            ois.readObject();
+        } catch (IOException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         System.out.println("Client: getData");
-        return null;
+        return data;
     }
 
     /**
      * Method disconnects client and server
+     *
      * @return error code
      */
     @Override
     public int disconnect() {
+        try {
+            clientsocket.close();
+        } catch (IOException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
         System.out.println("Client: disconnect");
         return JHelp.ERROR;
     }

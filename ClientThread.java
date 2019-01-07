@@ -8,7 +8,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import static jhelp.JHelp.DEFAULT_DATABASE_PORT;
 
 /**
  * This class provides a network connection between end client of
@@ -58,24 +63,58 @@ public class ClientThread implements JHelp, Runnable {
         System.out.println("ClientThread started");
         try {
 
-            DataOutputStream oos = new DataOutputStream(clientSocket.getOutputStream());
+            output = new ObjectOutputStream(clientSocket.getOutputStream());
             System.out.println("oos ok");
-            DataInputStream ois = new DataInputStream(clientSocket.getInputStream());
+            input = new ObjectInputStream(clientSocket.getInputStream());
             System.out.println("ois ok");
             //чтение и обработка входящих данных
+            Data data = null;
+            try {
+                data = (Data) input.readObject();
+                if(input.available()>0){
+                System.out.println(data);
+                
+                
+                }
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(ClientThread.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+                
+               
+                
+                
+                
+            
         } catch (IOException ex) {
 
         }
         System.out.println("MClient: run");
     }
 
+   
     /**
      * Opens input and output streams for data interchanging with
      * client application.  The method uses default parameters.
      * @return error code. The method returns {@link JHelp#OK} if streams are
      * successfully opened, otherwise the method returns {@link JHelp#ERROR}.
      */
+    @Override
     public int connect() {
+        try {
+            Socket client = new Socket(InetAddress.getLocalHost(), DEFAULT_DATABASE_PORT);
+            try {
+            ObjectOutputStream out= new ObjectOutputStream(client.getOutputStream());
+
+            System.out.println("Client DataOutputStream  created");
+            ObjectInputStream in = new ObjectInputStream(client.getInputStream());
+            System.out.println("ClientDataInputStream  created");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        } catch (IOException ex) {
+            Logger.getLogger(ClientThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
         System.out.println("MClient: connect");
         return JHelp.OK;
     }
@@ -100,7 +139,9 @@ public class ClientThread implements JHelp, Runnable {
      * application.
      * @return modified {@link Data} object
      */
+    @Override
     public Data getData(Data data) {
+        
         System.out.println("Client: getData");
         return null;
     }
