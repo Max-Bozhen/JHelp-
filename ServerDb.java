@@ -68,6 +68,12 @@ public class ServerDb implements JHelp {
      */
     public ServerDb() {
         this(DEFAULT_DATABASE_PORT);
+        try {
+            serverSocket = new ServerSocket(DEFAULT_DATABASE_PORT);
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
         System.out.println("SERVERDb: default constructor");
     }
 
@@ -77,12 +83,7 @@ public class ServerDb implements JHelp {
      * @param port defines port for {@link java.net.ServerSocket} object.
      */
     public ServerDb(int port) {
-        try {
-            serverSocket = new ServerSocket(DEFAULT_DATABASE_PORT);
 
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
         System.out.println("SERVERDb: constructor");
     }
 
@@ -102,9 +103,9 @@ public class ServerDb implements JHelp {
      * @param args array of {@link java.lang.String} type contains connection
      * parameters.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         ServerDb serverdb = new ServerDb();
-        serverdb.connect();
+        
         serverdb.run();
         System.out.println("SERVERDb: main");
     }
@@ -112,7 +113,9 @@ public class ServerDb implements JHelp {
     /**
      * Method defines job cycle for client request processing.
      */
-    private void run() {
+    private void run() throws IOException {
+        connect();
+        input.readUTF();
 
     }
 
@@ -123,35 +126,33 @@ public class ServerDb implements JHelp {
      */
     @Override
     public int connect() {
-        try {
-            clientSocket = serverSocket.accept();
-            while (!clientSocket.isClosed()) {
-                try {
-                    System.out.println("Client connected");
-                    output = new DataOutputStream(clientSocket.getOutputStream());
-                    input = new DataInputStream(clientSocket.getInputStream());
-                } catch (IOException ex) {
-                    Logger.getLogger(ServerDb.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        while (true) {
 
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException ie) {
+            try {
+                clientSocket = serverSocket.accept();
+            } catch (IOException ex) {
+                Logger.getLogger(ServerDb.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
-                }
-                System.out.println("SERVERDb: run");
+            try {
+                System.out.println("Client connected");
+                output = new DataOutputStream(clientSocket.getOutputStream());
+                input = new DataInputStream(clientSocket.getInputStream());
+            } catch (IOException ex) {
+                Logger.getLogger(ServerDb.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
-                System.out.println("SERVERDb: connect");
-                if (clientSocket.isClosed()) {
-                    serverSocket.close();
-                }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ie) {
 
             }
-        } catch (IOException ex) {
-            Logger.getLogger(ServerDb.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("SERVERDb: run");
+
+            System.out.println("SERVERDb: connect");
+            return JHelp.READY;
         }
 
-        return JHelp.READY;
     }
 
     /**

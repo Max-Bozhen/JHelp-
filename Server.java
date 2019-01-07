@@ -15,8 +15,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * This class sets a network connection between end client's objects
- * of {@link jhelp.Client} type and single {@link jhelp.ServerDb} object.
+ * This class sets a network connection between end client's objects of
+ * {@link jhelp.Client} type and single {@link jhelp.ServerDb} object.
+ *
  * @author <strong >Y.D.Zakovryashin, 2009</strong>
  * @version 1.0
  * @see jhelp.Client
@@ -41,11 +42,22 @@ public class Server implements JHelp {
      *
      */
     private DataOutputStream output;
-    private Socket serverClient;
 
-    /** Creates a new instance of Server */
+    /**
+     * Creates a new instance of Server
+     */
     public Server() {
         this(DEFAULT_SERVER_PORT, DEFAULT_DATABASE_PORT);
+        try {
+
+            clientSocket = new Socket(InetAddress.getLocalHost(), DEFAULT_DATABASE_PORT);
+
+            serverSocket = new ServerSocket(DEFAULT_SERVER_PORT);
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+        }
         System.out.println("SERVER: Default Server Constructed");
     }
 
@@ -55,29 +67,21 @@ public class Server implements JHelp {
      * @param dbPort
      */
     public Server(int port, int dbPort) {
-        port = DEFAULT_DATABASE_PORT;
-        dbPort = DEFAULT_DATABASE_PORT;
-        try {
-            serverClient = new Socket(InetAddress.getLocalHost(), DEFAULT_DATABASE_PORT);
-            clientSocket = serverSocket.accept();
-            ClientThread clentThread = new ClientThread(this, clientSocket);
-        } catch (UnknownHostException ex) {
-           ex.printStackTrace();
-        } catch (IOException ex) {
-           ex.printStackTrace();
-        }
+
         System.out.println("SERVER: Server Constructed");
     }
 
     /**
-     * 
+     *
      * @param args
+     * @throws java.io.IOException
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         System.out.println("SERVER: main");
         Server server = new Server();
-       
+
         if (server.connect(args) == JHelp.OK) {
+            System.out.println("dskg");
             server.run();
 //            server.disconnect();
         }
@@ -86,38 +90,47 @@ public class Server implements JHelp {
     /**
      *
      */
-    private void run() {
+    private void run() throws IOException {
+        while (true) {
+            Socket client = serverSocket.accept();
+            ClientThread clientThread = new ClientThread(this, client);
+            new Thread(clientThread).start();
+
+            System.out.println("SERVER: run");
+        }
+    }
+
+    /**
+     * The method sets connection to database ({@link jhelp.ServerDb} object)
+     * and create {@link java.net.ServerSocket} object for waiting of client's
+     * connection requests. This method uses default parameters for connection.
+     *
+     * @return error code. The method returns {@link JHelp#OK} if streams are
+     * successfully opened, otherwise the method returns {@link JHelp#ERROR}.
+     */
+    @Override
+    public int connect() {
+
         try {
             output = new DataOutputStream(clientSocket.getOutputStream());
 
             System.out.println("Client DataOutputStream  created");
             input = new DataInputStream(clientSocket.getInputStream());
             System.out.println("ClientDataInputStream  created");
-            
-            
-        } catch (IOException ex) {
-         ex.printStackTrace();
-        }
-        System.out.println("SERVER: run");
-    }
 
-    /**
-     * The method sets connection to database ({@link jhelp.ServerDb} object) and
-     * create {@link java.net.ServerSocket} object for waiting of client's
-     * connection requests. This method uses default parameters for connection.
-     * @return error code. The method returns {@link JHelp#OK} if streams are
-     * successfully opened, otherwise the method returns {@link JHelp#ERROR}.
-     */
-    @Override
-    public int connect() {
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
         System.out.println("SERVER: connect");
         return OK;
+
     }
 
     /**
-     * The method sets connection to database ({@link jhelp.ServerDb} object) and
-     * create {@link java.net.ServerSocket} object for waiting of client's
+     * The method sets connection to database ({@link jhelp.ServerDb} object)
+     * and create {@link java.net.ServerSocket} object for waiting of client's
      * connection requests.
+     *
      * @param args specifies properties of connection.
      * @return error code. The method returns {@link JHelp#OK} if connection are
      * openeds uccessfully, otherwise the method returns {@link JHelp#ERROR}.
@@ -129,24 +142,27 @@ public class Server implements JHelp {
     }
 
     /**
-     * Transports initial {@link Data} object from {@link ClientThread} object to
-     * {@link ServerDb} object and returns modified {@link Data} object to
+     * Transports initial {@link Data} object from {@link ClientThread} object
+     * to {@link ServerDb} object and returns modified {@link Data} object to
      * {@link ClientThread} object.
+     *
      * @param data Initial {@link Data} object which was obtained from client
      * application.
      * @return modified {@link Data} object
      */
     @Override
-    public Data getData(Data data) {
+    public Data getData(Data data
+    ) {
         System.out.println("SERVER:getData");
         return null;
     }
 
     /**
      * The method closes connection with database.
+     *
      * @return error code. The method returns {@link JHelp#OK} if a connection
-     * with database ({@link ServerDb} object) closed successfully,
-     * otherwise the method returns {@link JHelp#ERROR} or any error code.
+     * with database ({@link ServerDb} object) closed successfully, otherwise
+     * the method returns {@link JHelp#ERROR} or any error code.
      */
     @Override
     public int disconnect() {

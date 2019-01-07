@@ -3,6 +3,9 @@
  */
 package jhelp;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -50,7 +53,19 @@ public class ClientThread implements JHelp, Runnable {
     /**
      * The method defines main job cycle for the object.
      */
+    @Override
     public void run() {
+        System.out.println("ClientThread started");
+        try {
+
+            DataOutputStream oos = new DataOutputStream(clientSocket.getOutputStream());
+            System.out.println("oos ok");
+            DataInputStream ois = new DataInputStream(clientSocket.getInputStream());
+            System.out.println("ois ok");
+            //чтение и обработка входящих данных
+        } catch (IOException ex) {
+
+        }
         System.out.println("MClient: run");
     }
 
